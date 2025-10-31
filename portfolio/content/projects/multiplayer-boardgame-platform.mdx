@@ -1,0 +1,87 @@
+---
+slug: "multiplayer-boardgame-platform"
+title: "Multiplayer Board Game platform"
+description: "Built a WebSocket-based chat platform serving 50K+ daily users with 99.9% uptime"
+tldr:
+  - "Reduced message latency from 800ms to 45ms using optimized WebSocket connections"
+  - "Scaled to 50K+ concurrent users with horizontal scaling and Redis pub/sub"
+  - "Achieved 99.9% uptime over 6 months with comprehensive error handling"
+role: "Lead Engineer"
+teamSize: 4
+duration: "4 months"
+timeline:
+  start: "2024-01-15"
+  end: "2024-05-15"
+tags: ["React", "TypeScript", "WebSocket", "Redis", "Node.js"]
+domain: ["Real-Time", "Social"]
+metrics:
+  - label: "Message Latency"
+    before: "800ms"
+    after: "45ms"
+    improvement: "-94%"
+  - label: "Concurrent Users"
+    before: "5K"
+    after: "50K"
+    improvement: "+900%"
+liveUrl: "https://chat.example.com"
+repoUrl: "https://github.com/username/chat-app"
+coverImage: "/images/projects/chat-app-hero.png"
+images:
+  - "/images/projects/chat-architecture.png"
+  - "/images/projects/chat-metrics.png"
+featured: true
+publishedAt: "2024-06-01"
+---
+
+# Real-Time Chat Application
+
+## Context
+
+When I joined the team, the existing chat system struggled with performance issues. Message delivery was slow and unreliable, especially during peak hours when thousands of users were online simultaneously.
+
+## Approach
+
+I led the redesign of the chat infrastructure, focusing on three key areas:
+
+1. **WebSocket Optimization**: Implemented connection pooling and optimized message routing
+2. **Horizontal Scaling**: Designed a distributed architecture using Redis pub/sub
+3. **Error Recovery**: Built comprehensive error handling and automatic reconnection logic
+
+## Implementation
+
+### WebSocket Server
+
+```typescript
+import { WebSocketServer } from 'ws';
+import Redis from 'ioredis';
+
+const wss = new WebSocketServer({ port: 8080 });
+const redis = new Redis();
+const pub = new Redis();
+const sub = new Redis();
+
+// Handle incoming WebSocket connections
+wss.on('connection', (ws) => {
+  ws.on('message', async (message) => {
+    // Publish message to Redis
+    await pub.publish('chat-messages', message.toString());
+  });
+});
+
+// Subscribe to Redis messages
+sub.subscribe('chat-messages');
+sub.on('message', (channel, message) => {
+  // Broadcast to all connected clients
+  wss.clients.forEach((client) => {
+    client.send(message);
+  });
+});
+```
+
+## Results
+
+The new system reduced message latency by 94% and scaled to handle 10x more concurrent users. We maintained 99.9% uptime over 6 months in production.
+
+## Reflection
+
+This project taught me the importance of choosing the right architecture early. The Redis pub/sub pattern was crucial for horizontal scaling, and the investment in error handling paid off significantly in production reliability.

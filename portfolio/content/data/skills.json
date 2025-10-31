@@ -1,0 +1,36 @@
+{
+  "languages": [
+    "TypeScript",
+    "JavaScript",
+    "Python",
+    "SQL"
+  ],
+  "frontend": [
+    "React",
+    "Next.js",
+    "Vue.js",
+    "Tailwind CSS",
+    "HTML/CSS"
+  ],
+  "backend": [
+    "Node.js",
+    "Express",
+    "PostgreSQL",
+    "MongoDB",
+    "Redis"
+  ],
+  "tools": [
+    "Git",
+    "Docker",
+    "AWS",
+    "Vercel",
+    "CI/CD"
+  ],
+  "practices": [
+    "Agile/Scrum",
+    "TDD",
+    "Code Review",
+    "System Design",
+    "Performance Optimization"
+  ]
+}

@@ -1,0 +1,36 @@
+[
+  {
+    "id": "acme-corp-2023",
+    "company": "Acme Corp",
+    "role": "Senior Software Engineer",
+    "startDate": "2023-01-15",
+    "endDate": null,
+    "logo": "/images/companies/acme-logo.png",
+    "location": "San Francisco, CA",
+    "bullets": [
+      "Redesigned caching layer using Redis cluster, cutting p95 API latency from 900ms to 180ms (-80%)",
+      "Led migration to microservices architecture serving 2M+ requests/day with 99.95% uptime",
+      "Mentored 3 junior engineers, establishing code review practices and testing standards"
+    ],
+    "technologies": ["React", "TypeScript", "Node.js", "PostgreSQL", "Redis", "AWS"],
+    "projects": ["realtime-chat-app"],
+    "companyUrl": "https://acme.com"
+  },
+  {
+    "id": "startup-xyz-2021",
+    "company": "Startup XYZ",
+    "role": "Full Stack Developer",
+    "startDate": "2021-06-01",
+    "endDate": "2022-12-31",
+    "logo": "/images/companies/startup-logo.png",
+    "location": "Remote",
+    "bullets": [
+      "Built and launched MVP in 3 months, acquiring first 1,000 users",
+      "Implemented real-time features using WebSockets, improving user engagement by 40%",
+      "Optimized database queries reducing page load times by 60%"
+    ],
+    "technologies": ["React", "Next.js", "MongoDB", "Express", "Socket.io"],
+    "projects": [],
+    "companyUrl": "https://startupxyz.com"
+  }
+]

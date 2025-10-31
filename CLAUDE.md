@@ -37,6 +37,184 @@ When asked to backup Memory Bank System files, you will copy the core context fi
 
 ## Project Overview
 
+This repository contains two portfolio website projects:
+
+### Main Project: `/portfolio/` (Next.js 16)
+Active personal portfolio website built with Next.js App Router, TypeScript, and Tailwind CSS.
+
+**Tech Stack:**
+- Next.js 16 with App Router
+- TypeScript
+- Tailwind CSS
+- React 19
+- MDX for content (blog posts & projects)
+- Radix UI components
+- Resend (email service)
+- Upstash Redis (rate limiting)
+- Vercel Analytics
+
+**Architecture:**
+```
+portfolio/
+├── app/                    # Next.js App Router
+│   ├── api/               # API routes (contact, track, download-resume)
+│   ├── blog/              # Blog pages (dynamic routes)
+│   ├── projects/          # Project pages (dynamic routes)
+│   ├── about/             # About page
+│   ├── contact/           # Contact page
+│   ├── experience/        # Experience page
+│   ├── layout.tsx         # Root layout
+│   └── page.tsx           # Home page
+├── components/            # React components (organized by feature)
+│   ├── blog/
+│   ├── contact/
+│   ├── layout/
+│   ├── mdx/
+│   ├── projects/
+│   └── ui/
+├── content/              # Content files (file-based CMS)
+│   ├── blog/*.mdx        # Blog posts (frontmatter + markdown)
+│   ├── projects/*.mdx    # Project case studies
+│   └── data/
+│       ├── experience.json    # Work history
+│       └── skills.json        # Skills by category
+├── lib/                  # Utilities
+│   ├── mdx.ts           # MDX processing & frontmatter parsing
+│   ├── email.ts         # Email sending (Resend)
+│   ├── validation.ts    # Zod schemas
+│   └── utils.ts         # Helper functions
+├── types/               # TypeScript types
+│   ├── project.ts
+│   ├── blog.ts
+│   └── experience.ts
+└── public/              # Static assets
+    └── images/
+        ├── projects/    # Project images
+        ├── blog/        # Blog cover images
+        └── companies/   # Company logos
+```
+
+**Content Management:**
+- Blog posts and projects are MDX files with frontmatter
+- Work experience and skills are JSON files
+- Reading time is auto-calculated for blog posts
+- Projects can be marked as `featured: true` to appear on homepage
+
+**API Routes:**
+- `POST /api/contact` - Contact form submission (sends email via Resend)
+- `POST /api/track` - Custom analytics event tracking
+- `GET /api/download-resume` - Resume download with tracking
+
+### Secondary Project: `/Build Complete Portfolio App/` (Vite + React)
+React portfolio built with Vite and shadcn/ui components. Appears to be an alternative/legacy version.
+
+## Development Commands
+
+### Portfolio (Main Project)
+All commands must be run from the `/portfolio/` directory.
+
+```bash
+cd portfolio
+
+# Development
+npm run dev          # Start dev server at http://localhost:3000
+npm run build        # Create production build
+npm run start        # Start production server
+npm run lint         # Run ESLint
+npm run type-check   # Check TypeScript types without emitting files
+
+# Adding Content
+# 1. Blog post: Create /content/blog/my-post.mdx with frontmatter
+# 2. Project: Create /content/projects/my-project.mdx with frontmatter
+# 3. Experience: Edit /content/data/experience.json
+# 4. Skills: Edit /content/data/skills.json
+```
+
+### Build Complete Portfolio App (Vite Project)
+Run from `/Build Complete Portfolio App/` directory.
+
+```bash
+cd "Build Complete Portfolio App"
+
+npm run dev          # Start Vite dev server
+npm run build        # Build for production
+```
+
+## Environment Variables
+
+The portfolio project requires these environment variables (in `/portfolio/.env` or `.env.local`):
+
+```bash
+# Required for contact form
+RESEND_API_KEY=re_xxxxxxxxxxxxx
+CONTACT_EMAIL=your-email@example.com
+
+# Optional
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
+UPSTASH_REDIS_REST_URL=https://...
+UPSTASH_REDIS_REST_TOKEN=...
+```
+
+## Code Patterns & Conventions
+
+### MDX Content Structure
+Blog posts and projects use frontmatter for metadata:
+
+```yaml
+---
+# Blog Post
+slug: "post-slug"
+title: "Post Title"
+excerpt: "Summary (160 chars)"
+publishedAt: "2024-10-27"
+tags: ["React", "TypeScript"]
+category: "Tutorial"
+featured: true
+
+# Project
+slug: "project-slug"
+title: "Project Name"
+description: "One-line impact statement"
+tldr: ["Key outcome 1", "Key outcome 2"]
+role: "Developer"
+teamSize: 1
+duration: "2 months"
+timeline:
+  start: "2024-08-01"
+  end: "2024-10-01"
+tags: ["Next.js"]
+domain: ["Web Development"]
+featured: true
+publishedAt: "2024-10-27"
+---
+```
+
+### Component Organization
+- UI components in `/components/ui/` (Radix UI based)
+- Feature components in `/components/[feature]/`
+- Shared components in `/components/shared/`
+- Page-specific components in `/components/pages/`
+
+### Type Definitions
+TypeScript types are organized in `/types/` directory by domain (project, blog, experience).
+
+### Styling
+- Tailwind CSS with custom configuration in `tailwind.config.ts`
+- Global styles in `app/globals.css`
+- Use `cn()` utility from `/lib/utils.ts` for conditional classes
+
+### MDX Processing
+- MDX files are processed server-side using `next-mdx-remote`
+- Syntax highlighting via `rehype-pretty-code` with Shiki
+- Reading time calculated automatically with `reading-time` package
+- Frontmatter parsed with `gray-matter`
+
+## Documentation References
+
+For detailed content management instructions, refer to:
+- `/portfolio/CONTENT_MANAGEMENT.md` - Complete guide for adding/modifying content
+- `/portfolio/README.md` - Project setup and deployment guide
+
 
 
 ## ALWAYS START WITH THESE COMMANDS FOR COMMON TASKS
