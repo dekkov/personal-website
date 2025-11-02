@@ -4,6 +4,7 @@ import './globals.css';
 import { Analytics } from '@vercel/analytics/react';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
+import ChatWidget from '@/components/ChatWidget';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 const sora = Sora({ subsets: ['latin'], variable: '--font-sora' });
@@ -32,6 +33,7 @@ export default function RootLayout({
           {children}
         </main>
         <Footer />
+        <ChatWidget />
         <Analytics />
       </body>
     </html>
