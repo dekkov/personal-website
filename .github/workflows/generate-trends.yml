@@ -1,0 +1,64 @@
+name: Generate AI Trends
+
+on:
+  # Run daily at 9 AM UTC (adjust to your timezone)
+  schedule:
+    - cron: '0 9 * * *'
+
+  # Allow manual trigger
+  workflow_dispatch:
+    inputs:
+      daysBack:
+        description: 'Number of days to look back'
+        required: false
+        default: '1'
+      categories:
+        description: 'Comma-separated categories (agents,business,tools,research)'
+        required: false
+        default: 'agents,business,tools'
+
+jobs:
+  generate-trends:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: portfolio/package-lock.json
+
+      - name: Install dependencies
+        working-directory: portfolio
+        run: npm ci
+
+      - name: Generate trends via API
+        working-directory: portfolio
+        env:
+          NEXT_PUBLIC_SITE_URL: ${{ secrets.NEXT_PUBLIC_SITE_URL }}
+          MONGODB_URI: ${{ secrets.MONGODB_URI }}
+          MONGODB_DB_NAME: ${{ secrets.MONGODB_DB_NAME }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          DAYS_BACK="${{ github.event.inputs.daysBack || '1' }}"
+          CATEGORIES="${{ github.event.inputs.categories || 'agents,business,tools' }}"
+
+          echo "📡 Generating AI trends..."
+          echo "  Days back: $DAYS_BACK"
+          echo "  Categories: $CATEGORIES"
+
+          # Call the API endpoint
+          curl -X POST "$NEXT_PUBLIC_SITE_URL/api/trends/generate" \
+            -H "Content-Type: application/json" \
+            -d "{\"daysBack\": $DAYS_BACK, \"categories\": [\"$(echo $CATEGORIES | sed 's/,/","/g')\"]}" \
+            -v
+
+      - name: Summary
+        run: |
+          echo "✅ AI trends generation completed!"
+          echo "Review and publish at: ${{ secrets.NEXT_PUBLIC_SITE_URL }}/admin/trends"
