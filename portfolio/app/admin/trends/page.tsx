@@ -9,6 +9,32 @@ export default function AdminTrendsPage() {
   const [filter, setFilter] = useState<TrendStatus | 'all'>('pending_review');
   const [generating, setGenerating] = useState(false);
   const [selectedTrend, setSelectedTrend] = useState<TrendSummary | null>(null);
+  const [apiKey, setApiKey] = useState<string>('');
+  const [showApiKeyPrompt, setShowApiKeyPrompt] = useState(true);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editedTrend, setEditedTrend] = useState<TrendSummary | null>(null);
+
+  // Load API key from localStorage on mount
+  useEffect(() => {
+    const savedKey = localStorage.getItem('admin_api_key');
+    if (savedKey) {
+      setApiKey(savedKey);
+      setShowApiKeyPrompt(false);
+    }
+  }, []);
+
+  // Save API key to localStorage
+  const handleSaveApiKey = (key: string) => {
+    localStorage.setItem('admin_api_key', key);
+    setApiKey(key);
+    setShowApiKeyPrompt(false);
+  };
+
+  // Get authorization headers
+  const getAuthHeaders = () => ({
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${apiKey}`,
+  });
 
   // Fetch trends
   const fetchTrends = async () => {
@@ -43,7 +69,7 @@ export default function AdminTrendsPage() {
     try {
       const response = await fetch('/api/trends/generate', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify({
           daysBack: 1,
           categories: ['agents', 'business', 'tools'],
@@ -56,7 +82,12 @@ export default function AdminTrendsPage() {
         alert(`Success! Generated ${data.trends?.length || 0} trend summaries`);
         fetchTrends();
       } else {
-        alert(`Error: ${data.error || data.message}`);
+        if (response.status === 401) {
+          alert('Unauthorized: Please check your API key');
+          setShowApiKeyPrompt(true);
+        } else {
+          alert(`Error: ${data.error || data.message}`);
+        }
       }
     } catch (error) {
       console.error('Error generating trends:', error);
@@ -71,7 +102,7 @@ export default function AdminTrendsPage() {
     try {
       const response = await fetch(`/api/trends/${trendId}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ status: newStatus }),
       });
 
@@ -80,7 +111,49 @@ export default function AdminTrendsPage() {
         fetchTrends();
         setSelectedTrend(null);
       } else {
-        alert('Failed to update trend');
+        const data = await response.json();
+        if (response.status === 401) {
+          alert('Unauthorized: Please check your API key');
+          setShowApiKeyPrompt(true);
+        } else {
+          alert(`Failed to update trend: ${data.error || response.statusText}`);
+        }
+      }
+    } catch (error) {
+      console.error('Error updating trend:', error);
+      alert('Failed to update trend');
+    }
+  };
+
+  // Save edited trend
+  const handleSaveEdit = async () => {
+    if (!editedTrend || !editedTrend._id) return;
+
+    try {
+      const response = await fetch(`/api/trends/${editedTrend._id}`, {
+        method: 'PATCH',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          title: editedTrend.title,
+          summary: editedTrend.summary,
+          keyPoints: editedTrend.keyPoints,
+          tags: editedTrend.tags,
+        }),
+      });
+
+      if (response.ok) {
+        alert('Trend updated successfully!');
+        fetchTrends();
+        setIsEditMode(false);
+        setSelectedTrend(editedTrend);
+      } else {
+        const data = await response.json();
+        if (response.status === 401) {
+          alert('Unauthorized: Please check your API key');
+          setShowApiKeyPrompt(true);
+        } else {
+          alert(`Failed to update trend: ${data.error || response.statusText}`);
+        }
       }
     } catch (error) {
       console.error('Error updating trend:', error);
@@ -95,6 +168,7 @@ export default function AdminTrendsPage() {
     try {
       const response = await fetch(`/api/trends/${trendId}`, {
         method: 'DELETE',
+        headers: getAuthHeaders(),
       });
 
       if (response.ok) {
@@ -102,12 +176,30 @@ export default function AdminTrendsPage() {
         fetchTrends();
         setSelectedTrend(null);
       } else {
-        alert('Failed to delete trend');
+        const data = await response.json();
+        if (response.status === 401) {
+          alert('Unauthorized: Please check your API key');
+          setShowApiKeyPrompt(true);
+        } else {
+          alert(`Failed to delete trend: ${data.error || response.statusText}`);
+        }
       }
     } catch (error) {
       console.error('Error deleting trend:', error);
       alert('Failed to delete trend');
     }
+  };
+
+  // Enter edit mode
+  const handleEnterEditMode = () => {
+    setEditedTrend(selectedTrend);
+    setIsEditMode(true);
+  };
+
+  // Cancel edit mode
+  const handleCancelEdit = () => {
+    setIsEditMode(false);
+    setEditedTrend(null);
   };
 
   const getCategoryColor = (category: TrendCategory) => {
@@ -132,17 +224,61 @@ export default function AdminTrendsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">
+      {/* API Key Prompt Modal */}
+      {showApiKeyPrompt && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-md w-full p-8">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">Admin Authentication</h2>
+            <p className="text-gray-600 mb-4">
+              Please enter your ADMIN_API_KEY to access the admin panel.
+            </p>
+            <input
+              type="password"
+              placeholder="Enter API Key"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  const input = e.target as HTMLInputElement;
+                  handleSaveApiKey(input.value);
+                }
+              }}
+            />
+            <button
+              onClick={(e) => {
+                const input = e.currentTarget.previousElementSibling as HTMLInputElement;
+                handleSaveApiKey(input.value);
+              }}
+              className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            >
+              Save API Key
+            </button>
+            <p className="text-sm text-gray-500 mt-4">
+              This key will be stored in your browser's localStorage for future visits.
+            </p>
+          </div>
+        </div>
+      )}
+
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900">AI Trends Admin</h1>
-          <button
-            onClick={handleGenerate}
-            disabled={generating}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400"
-          >
-            {generating ? 'Generating...' : '🤖 Generate New Summaries'}
-          </button>
+          <div className="flex gap-3">
+            <button
+              onClick={() => setShowApiKeyPrompt(true)}
+              className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
+              title="Update API Key"
+            >
+              🔑 API Key
+            </button>
+            <button
+              onClick={handleGenerate}
+              disabled={generating}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400"
+            >
+              {generating ? 'Generating...' : '🤖 Generate New Summaries'}
+            </button>
+          </div>
         </div>
 
         {/* Filters */}
@@ -207,12 +343,25 @@ export default function AdminTrendsPage() {
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
             <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto p-8">
               <div className="flex justify-between items-start mb-6">
-                <h2 className="text-2xl font-bold text-gray-900 flex-1">
-                  {selectedTrend.title}
-                </h2>
+                {isEditMode && editedTrend ? (
+                  <input
+                    type="text"
+                    value={editedTrend.title}
+                    onChange={(e) => setEditedTrend({ ...editedTrend, title: e.target.value })}
+                    className="text-2xl font-bold text-gray-900 flex-1 border-b-2 border-blue-500 focus:outline-none"
+                  />
+                ) : (
+                  <h2 className="text-2xl font-bold text-gray-900 flex-1">
+                    {selectedTrend.title}
+                  </h2>
+                )}
                 <button
-                  onClick={() => setSelectedTrend(null)}
-                  className="text-gray-500 hover:text-gray-700 text-2xl"
+                  onClick={() => {
+                    setSelectedTrend(null);
+                    setIsEditMode(false);
+                    setEditedTrend(null);
+                  }}
+                  className="text-gray-500 hover:text-gray-700 text-2xl ml-4"
                 >
                   ×
                 </button>
@@ -229,16 +378,64 @@ export default function AdminTrendsPage() {
 
               <div className="mb-6">
                 <h3 className="font-semibold text-gray-900 mb-2">Summary</h3>
-                <p className="text-gray-700 whitespace-pre-wrap">{selectedTrend.summary}</p>
+                {isEditMode && editedTrend ? (
+                  <textarea
+                    value={editedTrend.summary}
+                    onChange={(e) => setEditedTrend({ ...editedTrend, summary: e.target.value })}
+                    rows={8}
+                    className="w-full text-gray-700 border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                ) : (
+                  <p className="text-gray-700 whitespace-pre-wrap">{selectedTrend.summary}</p>
+                )}
               </div>
 
               <div className="mb-6">
                 <h3 className="font-semibold text-gray-900 mb-2">Key Points</h3>
-                <ul className="list-disc list-inside space-y-1 text-gray-700">
-                  {selectedTrend.keyPoints.map((point, i) => (
-                    <li key={i}>{point}</li>
-                  ))}
-                </ul>
+                {isEditMode && editedTrend ? (
+                  <div className="space-y-2">
+                    {editedTrend.keyPoints.map((point, i) => (
+                      <div key={i} className="flex gap-2">
+                        <input
+                          type="text"
+                          value={point}
+                          onChange={(e) => {
+                            const newPoints = [...editedTrend.keyPoints];
+                            newPoints[i] = e.target.value;
+                            setEditedTrend({ ...editedTrend, keyPoints: newPoints });
+                          }}
+                          className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                        <button
+                          onClick={() => {
+                            const newPoints = editedTrend.keyPoints.filter((_, idx) => idx !== i);
+                            setEditedTrend({ ...editedTrend, keyPoints: newPoints });
+                          }}
+                          className="px-3 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    ))}
+                    <button
+                      onClick={() => {
+                        setEditedTrend({
+                          ...editedTrend,
+                          keyPoints: [...editedTrend.keyPoints, ''],
+                        });
+                      }}
+                      className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600"
+                    >
+                      + Add Key Point
+                    </button>
+                  </div>
+                ) : (
+                  <ul className="list-disc list-inside space-y-1 text-gray-700">
+                    {selectedTrend.keyPoints.map((point, i) => (
+                      <li key={i}>{point}</li>
+                    ))}
+                  </ul>
+                )}
               </div>
 
               <div className="mb-6">
@@ -265,42 +462,112 @@ export default function AdminTrendsPage() {
               {selectedTrend.tags && selectedTrend.tags.length > 0 && (
                 <div className="mb-6">
                   <h3 className="font-semibold text-gray-900 mb-2">Tags</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {selectedTrend.tags.map((tag, i) => (
-                      <span key={i} className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm">
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
+                  {isEditMode && editedTrend ? (
+                    <div className="space-y-2">
+                      <div className="flex flex-wrap gap-2">
+                        {editedTrend.tags?.map((tag, i) => (
+                          <div key={i} className="flex items-center gap-1 px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm">
+                            <input
+                              type="text"
+                              value={tag}
+                              onChange={(e) => {
+                                const newTags = [...(editedTrend.tags || [])];
+                                newTags[i] = e.target.value;
+                                setEditedTrend({ ...editedTrend, tags: newTags });
+                              }}
+                              className="bg-transparent border-none focus:outline-none w-24"
+                            />
+                            <button
+                              onClick={() => {
+                                const newTags = (editedTrend.tags || []).filter((_, idx) => idx !== i);
+                                setEditedTrend({ ...editedTrend, tags: newTags });
+                              }}
+                              className="text-red-600 hover:text-red-800 font-bold"
+                            >
+                              ×
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                      <button
+                        onClick={() => {
+                          setEditedTrend({
+                            ...editedTrend,
+                            tags: [...(editedTrend.tags || []), ''],
+                          });
+                        }}
+                        className="px-3 py-1 bg-blue-500 text-white text-sm rounded-lg hover:bg-blue-600"
+                      >
+                        + Add Tag
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex flex-wrap gap-2">
+                      {selectedTrend.tags.map((tag, i) => (
+                        <span key={i} className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm">
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
 
               {/* Actions */}
               <div className="flex gap-3 pt-6 border-t">
-                {selectedTrend.status === 'pending_review' && (
-                  <button
-                    onClick={() => handleUpdateStatus(selectedTrend._id!, 'published')}
-                    className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-                  >
-                    ✓ Publish
-                  </button>
-                )}
-                {selectedTrend.status === 'published' && (
-                  <button
-                    onClick={() => handleUpdateStatus(selectedTrend._id!, 'draft')}
-                    className="px-6 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700"
-                  >
-                    Unpublish
-                  </button>
+                {isEditMode ? (
+                  <>
+                    <button
+                      onClick={handleSaveEdit}
+                      className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                    >
+                      💾 Save Changes
+                    </button>
+                    <button
+                      onClick={handleCancelEdit}
+                      className="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
+                    >
+                      Cancel
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      onClick={handleEnterEditMode}
+                      className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                    >
+                      ✏️ Edit
+                    </button>
+                    {selectedTrend.status === 'pending_review' && (
+                      <button
+                        onClick={() => handleUpdateStatus(selectedTrend._id!, 'published')}
+                        className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                      >
+                        ✓ Publish
+                      </button>
+                    )}
+                    {selectedTrend.status === 'published' && (
+                      <button
+                        onClick={() => handleUpdateStatus(selectedTrend._id!, 'draft')}
+                        className="px-6 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700"
+                      >
+                        Unpublish
+                      </button>
+                    )}
+                    <button
+                      onClick={() => handleDelete(selectedTrend._id!)}
+                      className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                    >
+                      Delete
+                    </button>
+                  </>
                 )}
                 <button
-                  onClick={() => handleDelete(selectedTrend._id!)}
-                  className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
-                >
-                  Delete
-                </button>
-                <button
-                  onClick={() => setSelectedTrend(null)}
+                  onClick={() => {
+                    setSelectedTrend(null);
+                    setIsEditMode(false);
+                    setEditedTrend(null);
+                  }}
                   className="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 ml-auto"
                 >
                   Close

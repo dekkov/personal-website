@@ -180,22 +180,24 @@ export async function updateTrend(
   const db = await getDatabase();
   const collection = db.collection(COLLECTIONS.TRENDS);
 
+  // Remove _id from updates to prevent MongoDB immutable field error
+  const { _id, ...safeUpdates } = updates as any;
+
   const result = await collection.findOneAndUpdate(
     { _id: new ObjectId(id) },
     {
       $set: {
-        ...updates,
-        _id: undefined, // Don't update _id
+        ...safeUpdates,
         'metadata.updatedAt': new Date(),
       },
     },
     { returnDocument: 'after' }
   );
 
-  // findOneAndUpdate returns a ModifyResult with the document in .value
-  if (!result || !result.value) return null;
+  // findOneAndUpdate returns the modified document directly
+  if (!result) return null;
 
-  const doc = result.value;
+  const doc = result; // Result IS the document, not wrapped in .value
 
   return {
     ...doc,

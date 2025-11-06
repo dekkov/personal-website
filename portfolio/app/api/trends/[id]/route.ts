@@ -5,11 +5,12 @@ import { verifyAdminAuth } from '@/lib/auth';
 // GET /api/trends/[id] - Get a single trend by ID
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const includeArchived = request.nextUrl.searchParams.get('includeArchived') === 'true';
-    const trend = await getTrendById(params.id, includeArchived);
+    const trend = await getTrendById(id, includeArchived);
 
     if (!trend) {
       return NextResponse.json(
@@ -31,13 +32,14 @@ export async function GET(
 // PATCH /api/trends/[id] - Update a trend (admin only)
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   // Verify admin authentication
   const authError = verifyAdminAuth(request);
   if (authError) return authError;
 
   try {
+    const { id } = await params;
     const body = await request.json();
 
     // Prepare updates
@@ -59,7 +61,7 @@ export async function PATCH(
     if (body.category) updates.category = body.category;
     if (body.reviewedBy) updates['metadata.reviewedBy'] = body.reviewedBy;
 
-    const trend = await updateTrend(params.id, updates);
+    const trend = await updateTrend(id, updates);
 
     if (!trend) {
       return NextResponse.json(
@@ -81,14 +83,15 @@ export async function PATCH(
 // DELETE /api/trends/[id] - Delete a trend (admin only)
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   // Verify admin authentication
   const authError = verifyAdminAuth(request);
   if (authError) return authError;
 
   try {
-    const success = await deleteTrend(params.id);
+    const { id } = await params;
+    const success = await deleteTrend(id);
 
     if (!success) {
       return NextResponse.json(

@@ -244,20 +244,38 @@ The system includes a GitHub Actions workflow that runs daily at 9 AM UTC.
 
 Access: `/admin/trends`
 
+**Authentication:**
+- **First visit**: You'll be prompted to enter your `ADMIN_API_KEY`
+- The key is stored securely in your browser's localStorage
+- Click the "🔑 API Key" button in the header to update your key anytime
+- **Local development**: Authentication is optional (works without API key)
+- **Production**: API key is **REQUIRED** for all admin operations
+
 **Features:**
-- View all trends (pending, published, draft)
-- Filter by status
-- Generate new summaries with one click
-- Review AI-generated content
-- Edit before publishing
-- Publish or delete trends
+- 📋 View all trends (pending, published, draft)
+- 🔍 Filter by status (All, Pending Review, Published, Draft)
+- 🤖 Generate new summaries with one click
+- 👁️ Review AI-generated content in detail modal
+- ✏️ **Edit** title, summary, key points, and tags before publishing
+- ✅ Publish or unpublish trends
+- 🗑️ Delete trends
 
 **Workflow:**
-1. Click "🤖 Generate New Summaries"
-2. Wait for generation to complete (~30-60 seconds)
-3. Review pending summaries
-4. Click on a summary to view full details
-5. Click "✓ Publish" to make it public
+1. **Authenticate**: Enter your `ADMIN_API_KEY` on first visit
+2. **Generate**: Click "🤖 Generate New Summaries"
+3. **Wait**: Generation takes ~30-60 seconds (3 categories × 1 API call each)
+4. **Review**: Click on any summary card to open the detail modal
+5. **Edit** (optional): Click "✏️ Edit" button to modify content
+   - Edit title, summary, key points individually
+   - Add/remove/edit tags
+   - Click "💾 Save Changes" when done
+6. **Publish**: Click "✓ Publish" to make it public on `/trends`
+
+**Security Notes:**
+- All admin operations (Generate, Publish, Edit, Delete) require authentication
+- 401 Unauthorized errors mean your API key is invalid or expired
+- Update your API key anytime using the "🔑 API Key" button
+- Your API key never leaves your browser or gets committed to git
 
 ### Public Page
 
