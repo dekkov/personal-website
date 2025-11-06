@@ -11,6 +11,7 @@ const navItems = [
   { label: 'Projects', value: '/projects' },
   { label: 'Experience', value: '/experience' },
   { label: 'Blog', value: '/blog' },
+  { label: 'Trends', value: '/trends' },
   { label: 'About', value: '/about' },
   { label: 'Contact', value: '/contact' }
 ];

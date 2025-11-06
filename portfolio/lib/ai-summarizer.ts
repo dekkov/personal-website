@@ -180,7 +180,75 @@ Be concise, insightful, and professional. Avoid marketing language.`;
   }
 }
 
-// Main function: try Claude first, fallback to OpenAI
+// Fallback: Generate summary using Gemini (via gemini CLI)
+async function summarizeWithGemini(
+  category: TrendCategory,
+  articles: RSSFeedItem[]
+): Promise<SummarizationOutput> {
+  const categoryDesc = CATEGORY_DESCRIPTIONS[category];
+
+  const articlesText = articles
+    .map((article, index) => {
+      return `
+Article ${index + 1}:
+Title: ${article.title}
+Source: ${article.source}
+Date: ${article.pubDate.toLocaleDateString()}
+Content: ${article.description.slice(0, 500)}...
+URL: ${article.link}
+`;
+    })
+    .join('\n---\n');
+
+  const prompt = `You are an AI trends analyst. Analyze the following articles about ${categoryDesc} and create a comprehensive daily summary.
+
+${articlesText}
+
+Generate a JSON response with the following structure:
+{
+  "title": "A compelling title for this trend summary (60-80 characters)",
+  "summary": "A comprehensive summary (250-350 words) that synthesizes the key trends, developments, and implications from these articles. Write in an engaging, informative style.",
+  "keyPoints": ["3-5 bullet points highlighting the most important takeaways"],
+  "tags": ["5-8 relevant tags like specific company names, technologies, or concepts mentioned"]
+}
+
+Focus on:
+1. What are the major developments or trends?
+2. Why are they significant?
+3. What's the potential impact on the industry?
+4. Are there any common themes across articles?
+
+Be concise, insightful, and professional. Avoid marketing language. Respond with ONLY valid JSON, no other text.`;
+
+  try {
+    // Use gemini CLI via command line
+    const { execSync } = require('child_process');
+    const response = execSync(`gemini "${prompt.replace(/"/g, '\\"')}"`, {
+      encoding: 'utf-8',
+      maxBuffer: 10 * 1024 * 1024, // 10MB buffer
+    });
+
+    // Extract JSON from response
+    const jsonMatch = response.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      throw new Error('Failed to extract JSON from Gemini response');
+    }
+
+    const result = JSON.parse(jsonMatch[0]);
+
+    return {
+      title: result.title,
+      summary: result.summary,
+      keyPoints: result.keyPoints,
+      tags: result.tags,
+    };
+  } catch (error) {
+    console.error('Error generating summary with Gemini:', error);
+    throw error;
+  }
+}
+
+// Main function: try Claude first, then OpenAI, then Gemini
 export async function generateTrendSummary(
   category: TrendCategory,
   articles: RSSFeedItem[]
@@ -192,21 +260,31 @@ export async function generateTrendSummary(
   // Limit to most recent 10 articles to avoid token limits
   const limitedArticles = articles.slice(0, 10);
 
-  try {
-    if (anthropic) {
+  // Try Claude first
+  if (anthropic) {
+    try {
       return await summarizeWithClaude(category, limitedArticles);
-    } else if (process.env.OPENAI_API_KEY) {
-      return await summarizeWithOpenAI(category, limitedArticles);
-    } else {
-      throw new Error('No AI API key configured (ANTHROPIC_API_KEY or OPENAI_API_KEY)');
-    }
-  } catch (error) {
-    // If primary fails, try fallback
-    if (anthropic) {
+    } catch (error) {
       console.warn('Claude failed, trying OpenAI fallback');
-      return await summarizeWithOpenAI(category, limitedArticles);
     }
-    throw error;
+  }
+
+  // Try OpenAI second
+  if (process.env.OPENAI_API_KEY) {
+    try {
+      return await summarizeWithOpenAI(category, limitedArticles);
+    } catch (error) {
+      console.warn('OpenAI failed, trying Gemini fallback');
+    }
+  }
+
+  // Try Gemini third (last resort - free and usually works)
+  try {
+    return await summarizeWithGemini(category, limitedArticles);
+  } catch (error) {
+    throw new Error(
+      'All AI providers failed (Claude, OpenAI, Gemini). Please check API keys and rate limits.'
+    );
   }
 }
 

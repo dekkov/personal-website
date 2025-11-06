@@ -9,6 +9,8 @@
  *   curl -X POST http://localhost:3000/api/trends/generate \
  *     -H "Content-Type: application/json" \
  *     -d '{"daysBack": 1, "categories": ["agents", "business", "tools"]}'
+ *
+ * Note: Environment variables are loaded via tsx --env-file flags
  */
 
 import { fetchAllFeeds } from '../lib/rss-aggregator';
