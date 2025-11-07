@@ -1,36 +1,37 @@
 [
   {
-    "id": "acme-corp-2023",
-    "company": "Acme Corp",
-    "role": "Senior Software Engineer",
-    "startDate": "2023-01-15",
+    "id": "CASS-2025",
+    "company": "Oregon State University Center for Applied Systems and Software",
+    "role": "Software Developer",
+    "startDate": "2025-02-17",
     "endDate": null,
-    "logo": "/images/companies/acme-logo.png",
-    "location": "San Francisco, CA",
+    "logo": "/images/companies/cass-logo.png",
+    "location": "Corvallis, OR",
     "bullets": [
-      "Redesigned caching layer using Redis cluster, cutting p95 API latency from 900ms to 180ms (-80%)",
-      "Led migration to microservices architecture serving 2M+ requests/day with 99.95% uptime",
-      "Mentored 3 junior engineers, establishing code review practices and testing standards"
+      "Engineered an ETL synchronization pipeline between Salesforce Cloud and on-prem databases.",
+      "Processed 40,000+ student records daily with automated validation and scheduling system via Windows service.",
+      "Reduced sync runtime by 70% by introducing parallel execution and optimizing query output to prevent race conditions.",
+      "Automated the deployment of R workflows to AWS, GCP, and Azure serverless functions using GitHub Actions."
     ],
-    "technologies": ["React", "TypeScript", "Node.js", "PostgreSQL", "Redis", "AWS"],
-    "projects": ["realtime-chat-app"],
-    "companyUrl": "https://acme.com"
+    "technologies": ["Python", "SQL", ".NET", "Docker", "AWS", "C#", "Windows Service"],
+    "projects": [],
+    "companyUrl": "https://cass.oregonstate.edu"
   },
   {
-    "id": "startup-xyz-2021",
-    "company": "Startup XYZ",
-    "role": "Full Stack Developer",
-    "startDate": "2021-06-01",
-    "endDate": "2022-12-31",
-    "logo": "/images/companies/startup-logo.png",
-    "location": "Remote",
+    "id": "research-assistant-2024",
+    "company": "Oregon State University",
+    "role": "Undergraduate Research Assistant",
+    "startDate": "2024-06-01",
+    "endDate": "2024-09-15",
+    "logo": "/images/companies/oregon-state-logo.png",
+    "location": "Corvallis, OR",
     "bullets": [
-      "Built and launched MVP in 3 months, acquiring first 1,000 users",
-      "Implemented real-time features using WebSockets, improving user engagement by 40%",
-      "Optimized database queries reducing page load times by 60%"
+      "Built a full-stack iOS application with Swift and Python backend to deliver personalized daily article summaries.",
+      "Implemented an NLP pipeline leveraging the GPT-4 API for automated key-content extraction and summary generation.",
+      "Conducted user research to gather feedback and iterate on the app's features and user experience."
     ],
-    "technologies": ["React", "Next.js", "MongoDB", "Express", "Socket.io"],
+    "technologies": ["Swift", "Python", "GPT-4", "iOS", "AWS"],
     "projects": [],
-    "companyUrl": "https://startupxyz.com"
+    "companyUrl": ""
   }
 ]
