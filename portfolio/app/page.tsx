@@ -1,17 +1,31 @@
 // Home page
 
-import { ArrowRight, Download, Code, Zap, Award, Eye } from 'lucide-react';
+import { ArrowRight, Download, Code, Zap, Award, Eye, TrendingUp, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { ProjectCard } from '@/components/shared/ProjectCard';
 import { getFeaturedProjects, getBlogPosts } from '@/lib/mdx';
+import { getTrends } from '@/lib/trends-db';
 import Link from 'next/link';
 
 export default async function Home() {
   const featuredProjects = await getFeaturedProjects();
   const blogPosts = await getBlogPosts();
   const latestPost = blogPosts[0];
+
+  // Fetch latest published trend
+  let latestTrend = null;
+  try {
+    const { trends } = await getTrends({
+      page: 1,
+      limit: 1,
+      status: 'published',
+    });
+    latestTrend = trends[0] || null;
+  } catch (error) {
+    console.error('Failed to fetch trends:', error);
+  }
 
   return (
     <div className="min-h-screen">
@@ -140,6 +154,89 @@ export default async function Home() {
           </div>
         </div>
       </section>
+
+      {/* AI Trends Section */}
+      {latestTrend && (
+        <section className="py-16 md:py-24 bg-gradient-to-br from-blue-50/50 to-indigo-50/50 dark:from-blue-950/20 dark:to-indigo-950/20" aria-labelledby="ai-trends-heading">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-center gap-2 mb-4">
+              <TrendingUp className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+              <h2 id="ai-trends-heading" className="text-center">
+                Latest AI Trends
+              </h2>
+            </div>
+            <p className="text-center text-foreground/70 mb-8">
+              Daily summaries of the most important AI developments
+            </p>
+
+            <Card className="hover:shadow-xl transition-shadow border-blue-100 dark:border-blue-900">
+              <CardHeader>
+                <div className="flex items-start justify-between gap-4 mb-3">
+                  <h3 className="font-semibold text-xl">{latestTrend.title}</h3>
+                  <Badge variant="secondary" className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                    <Calendar className="h-3 w-3 mr-1" />
+                    {new Date(latestTrend.date).toLocaleDateString('en-US', {
+                      month: 'short',
+                      day: 'numeric'
+                    })}
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <p className="text-foreground/80 mb-4 line-clamp-3">
+                  {latestTrend.summary}
+                </p>
+
+                {/* Key Points Preview */}
+                {latestTrend.keyPoints && latestTrend.keyPoints.length > 0 && (
+                  <div className="mb-4 bg-muted/50 rounded-lg p-4">
+                    <p className="text-sm font-semibold text-foreground/90 mb-2">
+                      Key Takeaways:
+                    </p>
+                    <ul className="space-y-1">
+                      {latestTrend.keyPoints.slice(0, 3).map((point, i) => (
+                        <li key={i} className="text-sm text-foreground/70 flex items-start">
+                          <span className="text-blue-600 dark:text-blue-400 mr-2">•</span>
+                          <span>{point}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Tags */}
+                {latestTrend.tags && latestTrend.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {latestTrend.tags.slice(0, 5).map((tag) => (
+                      <Badge key={tag} variant="outline" className="text-xs">
+                        {tag}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">
+                    {latestTrend.sources?.length || 0} sources
+                  </span>
+                  <Button
+                    variant="default"
+                    size="sm"
+                    className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600"
+                    aria-label="Read full AI trends summary"
+                    asChild
+                  >
+                    <Link href="/trends">
+                      View All Trends
+                      <ArrowRight className="ml-1 h-4 w-4" />
+                    </Link>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </section>
+      )}
 
       {/* Latest Note */}
       {latestPost && (
