@@ -61,7 +61,7 @@ export default function AdminTrendsPage() {
 
   // Generate new trends
   const handleGenerate = async () => {
-    if (!confirm('Generate new trend summaries? This will fetch the latest articles and create draft summaries.')) {
+    if (!confirm('Generate today\'s AI news summary? This will fetch the top 5 TechCrunch AI articles and create a daily summary.')) {
       return;
     }
 
@@ -72,14 +72,13 @@ export default function AdminTrendsPage() {
         headers: getAuthHeaders(),
         body: JSON.stringify({
           daysBack: 1,
-          categories: ['agents', 'business', 'tools'],
         }),
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        alert(`Success! Generated ${data.trends?.length || 0} trend summaries`);
+        alert(`Success! Generated daily AI news summary`);
         fetchTrends();
       } else {
         if (response.status === 401) {
@@ -90,8 +89,8 @@ export default function AdminTrendsPage() {
         }
       }
     } catch (error) {
-      console.error('Error generating trends:', error);
-      alert('Failed to generate trends');
+      console.error('Error generating trend:', error);
+      alert('Failed to generate summary');
     } finally {
       setGenerating(false);
     }
@@ -276,7 +275,7 @@ export default function AdminTrendsPage() {
               disabled={generating}
               className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400"
             >
-              {generating ? 'Generating...' : '🤖 Generate New Summaries'}
+              {generating ? 'Generating...' : '🤖 Generate Daily Summary'}
             </button>
           </div>
         </div>

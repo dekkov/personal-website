@@ -1,29 +1,16 @@
 import Anthropic from '@anthropic-ai/sdk';
-import type { RSSFeedItem, SummarizationOutput, TrendCategory } from '@/types/trend';
+import type { RSSFeedItem, SummarizationOutput } from '@/types/trend';
 
 // Initialize Anthropic client (or OpenAI as fallback)
 const anthropic = process.env.ANTHROPIC_API_KEY
   ? new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
   : null;
 
-// Category descriptions for better AI context
-const CATEGORY_DESCRIPTIONS = {
-  agents: 'AI agents, autonomous systems, multi-agent frameworks, agentic workflows, and automation tools',
-  business: 'Enterprise AI adoption, organizational strategy shifts, market trends, investments, and business impact',
-  tools: 'Developer tools, frameworks, platforms, infrastructure, SDKs, and new releases',
-  research: 'AI research papers, model breakthroughs, academic studies, and technical innovations',
-};
-
 // Generate summary using Claude API
-async function summarizeWithClaude(
-  category: TrendCategory,
-  articles: RSSFeedItem[]
-): Promise<SummarizationOutput> {
+async function summarizeWithClaude(articles: RSSFeedItem[]): Promise<SummarizationOutput> {
   if (!anthropic) {
     throw new Error('Anthropic API key not configured');
   }
-
-  const categoryDesc = CATEGORY_DESCRIPTIONS[category];
 
   // Prepare articles text
   const articlesText = articles
@@ -39,22 +26,22 @@ URL: ${article.link}
     })
     .join('\n---\n');
 
-  const prompt = `You are an AI trends analyst. Analyze the following articles about ${categoryDesc} and create a comprehensive daily summary.
+  const prompt = `You are an AI trends analyst. Analyze the following TOP 5 AI news stories from TechCrunch today and create a compelling daily summary.
 
 ${articlesText}
 
 Generate a JSON response with the following structure:
 {
-  "title": "A compelling title for this trend summary (60-80 characters)",
+  "title": "A compelling title for today's AI news (60-80 characters)",
   "summary": "A comprehensive summary (250-350 words) that synthesizes the key trends, developments, and implications from these articles. Write in an engaging, informative style.",
   "keyPoints": ["3-5 bullet points highlighting the most important takeaways"],
   "tags": ["5-8 relevant tags like specific company names, technologies, or concepts mentioned"]
 }
 
 Focus on:
-1. What are the major developments or trends?
+1. What are the major developments or trends today?
 2. Why are they significant?
-3. What's the potential impact on the industry?
+3. What's the potential impact on the AI industry?
 4. Are there any common themes across articles?
 
 Be concise, insightful, and professional. Avoid marketing language.`;
@@ -94,15 +81,10 @@ Be concise, insightful, and professional. Avoid marketing language.`;
 }
 
 // Fallback: Generate summary using OpenAI
-async function summarizeWithOpenAI(
-  category: TrendCategory,
-  articles: RSSFeedItem[]
-): Promise<SummarizationOutput> {
+async function summarizeWithOpenAI(articles: RSSFeedItem[]): Promise<SummarizationOutput> {
   if (!process.env.OPENAI_API_KEY) {
     throw new Error('OpenAI API key not configured');
   }
-
-  const categoryDesc = CATEGORY_DESCRIPTIONS[category];
 
   const articlesText = articles
     .map((article, index) => {
@@ -117,22 +99,22 @@ URL: ${article.link}
     })
     .join('\n---\n');
 
-  const prompt = `You are an AI trends analyst. Analyze the following articles about ${categoryDesc} and create a comprehensive daily summary.
+  const prompt = `You are an AI trends analyst. Analyze the following TOP 5 AI news stories from TechCrunch today and create a compelling daily summary.
 
 ${articlesText}
 
 Generate a JSON response with the following structure:
 {
-  "title": "A compelling title for this trend summary (60-80 characters)",
+  "title": "A compelling title for today's AI news (60-80 characters)",
   "summary": "A comprehensive summary (250-350 words) that synthesizes the key trends, developments, and implications from these articles. Write in an engaging, informative style.",
   "keyPoints": ["3-5 bullet points highlighting the most important takeaways"],
   "tags": ["5-8 relevant tags like specific company names, technologies, or concepts mentioned"]
 }
 
 Focus on:
-1. What are the major developments or trends?
+1. What are the major developments or trends today?
 2. Why are they significant?
-3. What's the potential impact on the industry?
+3. What's the potential impact on the AI industry?
 4. Are there any common themes across articles?
 
 Be concise, insightful, and professional. Avoid marketing language.`;
@@ -180,90 +162,19 @@ Be concise, insightful, and professional. Avoid marketing language.`;
   }
 }
 
-// Fallback: Generate summary using Gemini (via gemini CLI)
-async function summarizeWithGemini(
-  category: TrendCategory,
-  articles: RSSFeedItem[]
-): Promise<SummarizationOutput> {
-  const categoryDesc = CATEGORY_DESCRIPTIONS[category];
-
-  const articlesText = articles
-    .map((article, index) => {
-      return `
-Article ${index + 1}:
-Title: ${article.title}
-Source: ${article.source}
-Date: ${article.pubDate.toLocaleDateString()}
-Content: ${article.description.slice(0, 500)}...
-URL: ${article.link}
-`;
-    })
-    .join('\n---\n');
-
-  const prompt = `You are an AI trends analyst. Analyze the following articles about ${categoryDesc} and create a comprehensive daily summary.
-
-${articlesText}
-
-Generate a JSON response with the following structure:
-{
-  "title": "A compelling title for this trend summary (60-80 characters)",
-  "summary": "A comprehensive summary (250-350 words) that synthesizes the key trends, developments, and implications from these articles. Write in an engaging, informative style.",
-  "keyPoints": ["3-5 bullet points highlighting the most important takeaways"],
-  "tags": ["5-8 relevant tags like specific company names, technologies, or concepts mentioned"]
-}
-
-Focus on:
-1. What are the major developments or trends?
-2. Why are they significant?
-3. What's the potential impact on the industry?
-4. Are there any common themes across articles?
-
-Be concise, insightful, and professional. Avoid marketing language. Respond with ONLY valid JSON, no other text.`;
-
-  try {
-    // Use gemini CLI via command line
-    const { execSync } = require('child_process');
-    const response = execSync(`gemini "${prompt.replace(/"/g, '\\"')}"`, {
-      encoding: 'utf-8',
-      maxBuffer: 10 * 1024 * 1024, // 10MB buffer
-    });
-
-    // Extract JSON from response
-    const jsonMatch = response.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-      throw new Error('Failed to extract JSON from Gemini response');
-    }
-
-    const result = JSON.parse(jsonMatch[0]);
-
-    return {
-      title: result.title,
-      summary: result.summary,
-      keyPoints: result.keyPoints,
-      tags: result.tags,
-    };
-  } catch (error) {
-    console.error('Error generating summary with Gemini:', error);
-    throw error;
-  }
-}
-
-// Main function: try Claude first, then OpenAI, then Gemini
-export async function generateTrendSummary(
-  category: TrendCategory,
-  articles: RSSFeedItem[]
-): Promise<SummarizationOutput> {
+// Main function: try Claude first, then OpenAI
+export async function generateDailySummary(articles: RSSFeedItem[]): Promise<SummarizationOutput> {
   if (articles.length === 0) {
     throw new Error('No articles provided for summarization');
   }
 
-  // Limit to most recent 10 articles to avoid token limits
-  const limitedArticles = articles.slice(0, 10);
+  // Limit to top 5 articles
+  const topArticles = articles.slice(0, 5);
 
   // Try Claude first
   if (anthropic) {
     try {
-      return await summarizeWithClaude(category, limitedArticles);
+      return await summarizeWithClaude(topArticles);
     } catch (error) {
       console.warn('Claude failed, trying OpenAI fallback');
     }
@@ -272,53 +183,12 @@ export async function generateTrendSummary(
   // Try OpenAI second
   if (process.env.OPENAI_API_KEY) {
     try {
-      return await summarizeWithOpenAI(category, limitedArticles);
+      return await summarizeWithOpenAI(topArticles);
     } catch (error) {
-      console.warn('OpenAI failed, trying Gemini fallback');
+      console.warn('OpenAI failed');
+      throw error;
     }
   }
 
-  // Try Gemini third (last resort - free and usually works)
-  try {
-    return await summarizeWithGemini(category, limitedArticles);
-  } catch (error) {
-    throw new Error(
-      'All AI providers failed (Claude, OpenAI, Gemini). Please check API keys and rate limits.'
-    );
-  }
-}
-
-// Batch generate summaries for multiple categories
-export async function generateAllSummaries(articlesByCategory: {
-  agents?: RSSFeedItem[];
-  business?: RSSFeedItem[];
-  tools?: RSSFeedItem[];
-  research?: RSSFeedItem[];
-}): Promise<{
-  category: TrendCategory;
-  summary: SummarizationOutput;
-  articles: RSSFeedItem[];
-}[]> {
-  const results: {
-    category: TrendCategory;
-    summary: SummarizationOutput;
-    articles: RSSFeedItem[];
-  }[] = [];
-
-  for (const [category, articles] of Object.entries(articlesByCategory)) {
-    if (articles && articles.length > 0) {
-      try {
-        const summary = await generateTrendSummary(category as TrendCategory, articles);
-        results.push({
-          category: category as TrendCategory,
-          summary,
-          articles: articles.slice(0, 10), // Store only the articles used
-        });
-      } catch (error) {
-        console.error(`Failed to generate summary for ${category}:`, error);
-      }
-    }
-  }
-
-  return results;
+  throw new Error('No AI providers available. Please configure ANTHROPIC_API_KEY or OPENAI_API_KEY.');
 }
