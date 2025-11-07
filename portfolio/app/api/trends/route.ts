@@ -56,8 +56,25 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('Error fetching trends:', error);
+
+    // Check if it's a MongoDB connection error
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    if (errorMessage.includes('MongoDB connection not initialized')) {
+      return NextResponse.json(
+        {
+          error: 'Database not configured',
+          message: 'Please configure MONGODB_URI and MONGODB_DB_NAME environment variables in Vercel Dashboard > Settings > Environment Variables',
+          details: errorMessage
+        },
+        { status: 503 }
+      );
+    }
+
     return NextResponse.json(
-      { error: 'Failed to fetch trends' },
+      {
+        error: 'Failed to fetch trends',
+        details: errorMessage
+      },
       { status: 500 }
     );
   }

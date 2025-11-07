@@ -7,12 +7,14 @@ import { TrendSummary, TrendCategory } from '@/types/trend';
 export default function TrendsPage() {
   const [trends, setTrends] = useState<TrendSummary[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [categoryFilter, setCategoryFilter] = useState<TrendCategory | 'all'>('all');
 
   const fetchTrends = async () => {
     setLoading(true);
+    setError(null);
     try {
       const params = new URLSearchParams({
         page: page.toString(),
@@ -27,10 +29,23 @@ export default function TrendsPage() {
       const response = await fetch(`/api/trends?${params}`);
       const data = await response.json();
 
+      // Check if response is successful
+      if (!response.ok) {
+        throw new Error(data.message || data.error || 'Failed to load trends');
+      }
+
+      // Validate data structure
+      if (!data.trends || !data.pagination) {
+        throw new Error('Invalid response format from server');
+      }
+
       setTrends(data.trends);
       setTotalPages(data.pagination.totalPages);
     } catch (error) {
       console.error('Error fetching trends:', error);
+      setError(error instanceof Error ? error.message : 'Failed to load trends');
+      setTrends([]);
+      setTotalPages(1);
     } finally {
       setLoading(false);
     }
@@ -100,6 +115,19 @@ export default function TrendsPage() {
         {loading ? (
           <div className="text-center py-12">
             <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+          </div>
+        ) : error ? (
+          <div className="text-center py-12">
+            <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-2xl mx-auto">
+              <p className="text-red-800 font-semibold mb-2">Unable to load trends</p>
+              <p className="text-red-600 text-sm">{error}</p>
+              <button
+                onClick={() => fetchTrends()}
+                className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+              >
+                Try Again
+              </button>
+            </div>
           </div>
         ) : trends.length === 0 ? (
           <div className="text-center py-12">
