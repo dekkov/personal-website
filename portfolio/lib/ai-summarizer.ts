@@ -17,7 +17,7 @@ async function summarizeWithGemini(articles: RSSFeedItem[]): Promise<Summarizati
     throw new Error('Gemini API key not configured');
   }
 
-  const model = gemini.getGenerativeModel({ model: 'gemini-1.5-flash' }); // Fast and free
+  const model = gemini.getGenerativeModel({ model: 'gemini-2.5-flash' }); // Fast and free
 
   // Prepare articles text
   const articlesText = articles
@@ -27,7 +27,7 @@ Article ${index + 1}:
 Title: ${article.title}
 Source: ${article.source}
 Date: ${article.pubDate.toLocaleDateString()}
-Content: ${article.description.slice(0, 500)}...
+Content: ${(article.description || '').slice(0, 500)}...
 URL: ${article.link}
 `;
     })
@@ -91,7 +91,7 @@ Article ${index + 1}:
 Title: ${article.title}
 Source: ${article.source}
 Date: ${article.pubDate.toLocaleDateString()}
-Content: ${article.description.slice(0, 500)}...
+Content: ${(article.description || '').slice(0, 500)}...
 URL: ${article.link}
 `;
     })
@@ -164,7 +164,7 @@ Article ${index + 1}:
 Title: ${article.title}
 Source: ${article.source}
 Date: ${article.pubDate.toLocaleDateString()}
-Content: ${article.description.slice(0, 500)}...
+Content: ${(article.description || '').slice(0, 500)}...
 URL: ${article.link}
 `;
     })

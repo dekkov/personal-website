@@ -19,12 +19,12 @@ export async function fetchTopAINews(limit = 5, daysBack = 1): Promise<RSSFeedIt
 
     // Parse and filter articles
     const articles: RSSFeedItem[] = feed.items
-      .map((item) => ({
+      .map((item: any) => ({
         title: item.title || 'Untitled',
         link: item.link || '',
         pubDate: item.pubDate ? new Date(item.pubDate) : new Date(),
         description: item.contentSnippet || item.content || item.description || '',
-        content: (item as any)['content:encoded'] || item.content || item.contentSnippet || '',
+        content: item['content:encoded'] || item.content || item.contentSnippet || '',
         categories: item.categories || [],
         source: 'TechCrunch AI',
       }))
