@@ -36,11 +36,11 @@ export default function ContactPage() {
               <h2 className="text-lg font-semibold mb-4">Contact Information</h2>
               <div className="space-y-4">
                 <a
-                  href="mailto:your-email@example.com"
+                  href="mailto:trhoang220703@gmail.com"
                   className="flex items-center gap-3 text-foreground/80 hover:text-primary transition-colors"
                 >
                   <Mail className="h-5 w-5" />
-                  <span className="text-sm">your-email@example.com</span>
+                  <span className="text-sm">trhoang220703@gmail.com</span>
                 </a>
               </div>
             </Card>
@@ -49,7 +49,7 @@ export default function ContactPage() {
               <h2 className="text-lg font-semibold mb-4">Connect Online</h2>
               <div className="space-y-3">
                 <a
-                  href="https://github.com/yourusername"
+                  href="https://github.com/dekkov"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-3 text-foreground/80 hover:text-primary transition-colors"
@@ -58,7 +58,7 @@ export default function ContactPage() {
                   <span className="text-sm">GitHub</span>
                 </a>
                 <a
-                  href="https://linkedin.com/in/yourusername"
+                  href="https://linkedin.com/in/hoangtran1"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-3 text-foreground/80 hover:text-primary transition-colors"
@@ -67,7 +67,7 @@ export default function ContactPage() {
                   <span className="text-sm">LinkedIn</span>
                 </a>
                 <a
-                  href="https://twitter.com/yourusername"
+                  href="https://twitter.com/dekkov"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-3 text-foreground/80 hover:text-primary transition-colors"
